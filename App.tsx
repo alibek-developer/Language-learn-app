@@ -20,6 +20,7 @@ import { SentenceAnalysisModal } from './src/components/SentenceAnalysisModal';
 const MainNavigator: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<TabKey>('home');
   const [isInReader, setIsInReader] = useState<boolean>(false);
+  const [isReadingArticle, setIsReadingArticle] = useState<boolean>(false);
   const { selectReading } = useApp();
 
   const handleOpenReader = (readingId: string) => {
@@ -31,6 +32,8 @@ const MainNavigator: React.FC = () => {
     setIsInReader(false);
   };
 
+  const isReaderActive = isInReader || (currentTab === 'reading' && isReadingArticle);
+
   const renderActiveScreen = () => {
     if (isInReader) {
       return <ReaderScreen onBack={handleBackFromReader} />;
@@ -41,16 +44,17 @@ const MainNavigator: React.FC = () => {
         return (
           <HomeScreen
             onNavigateTab={(tab) => {
-              if (tab === 'reading') {
-                setCurrentTab('reading');
-              } else {
-                setCurrentTab(tab);
-              }
+              setCurrentTab(tab);
             }}
           />
         );
       case 'reading':
-        return <ReadingScreen onOpenReader={handleOpenReader} />;
+        return (
+          <ReadingScreen
+            onOpenReader={handleOpenReader}
+            onReaderModeChange={setIsReadingArticle}
+          />
+        );
       case 'vocab':
         return <VocabularyScreen onBack={() => setCurrentTab('home')} />;
       case 'writing':
@@ -58,7 +62,13 @@ const MainNavigator: React.FC = () => {
       case 'profile':
         return <ProfileScreen />;
       default:
-        return <HomeScreen onNavigateTab={setCurrentTab} />;
+        return (
+          <HomeScreen
+            onNavigateTab={(tab) => {
+              setCurrentTab(tab);
+            }}
+          />
+        );
     }
   };
 
@@ -68,12 +78,13 @@ const MainNavigator: React.FC = () => {
       <View style={styles.mainContainer}>
         {renderActiveScreen()}
 
-        {/* Floating Bottom Nav Bar (hidden when in reader or on reading tab) */}
-        {!isInReader && currentTab !== 'reading' ? (
+        {/* Floating Bottom Nav Bar (hidden only when actively reading an article) */}
+        {!isReaderActive ? (
           <BottomNavBar
             currentTab={currentTab}
             onTabChange={(tab) => {
               setIsInReader(false);
+              setIsReadingArticle(false);
               setCurrentTab(tab);
             }}
           />
