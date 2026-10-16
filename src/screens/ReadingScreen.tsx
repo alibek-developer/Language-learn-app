@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import * as Clipboard from 'expo-clipboard';
 import Animated, {
+  SharedValue,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -816,7 +817,7 @@ function PlayRing({ th }: { th: ThemeConfig }) {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[StyleSheet.absoluteFillObject, { borderRadius: 26, backgroundColor: th.accent }, a]}
+      style={[StyleSheet.absoluteFill, { borderRadius: 26, backgroundColor: th.accent }, a]}
     />
   );
 }
@@ -825,7 +826,7 @@ function Particle({
   p,
   pt,
 }: {
-  p: Animated.SharedValue<number>;
+  p: SharedValue<number>;
   pt: { a: number; d: number; c: string; sz: number; r: number };
 }) {
   const a = useAnimatedStyle(() => ({
@@ -1914,9 +1915,10 @@ function Library({
 // ─── Asosiy ekran ────────────────────────────────────────
 export interface ReadingScreenProps {
   onOpenReader?: (id: string) => void;
+  onReaderModeChange?: (isInReader: boolean) => void;
 }
 
-export const ReadingScreen: React.FC<ReadingScreenProps> = () => {
+export const ReadingScreen: React.FC<ReadingScreenProps> = ({ onReaderModeChange }) => {
   const [fontsLoaded] = useFonts({
     BricolageGrotesque_700Bold,
     BricolageGrotesque_800ExtraBold,
@@ -1935,6 +1937,10 @@ export const ReadingScreen: React.FC<ReadingScreenProps> = () => {
   const [themeId, setThemeId] = useState('paper');
   const [saved, setSaved] = useState<string[]>(['lighthouse', 'harbor']);
   const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    onReaderModeChange?.(openId !== null);
+  }, [openId, onReaderModeChange]);
 
   // Sync saved words from vocabulary if available
   useEffect(() => {
@@ -2038,7 +2044,7 @@ const s = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
     paddingTop: (StatusBar.currentHeight || 44) + 14,
-    paddingBottom: 60,
+    paddingBottom: 110,
   },
   header: {
     flexDirection: 'row',

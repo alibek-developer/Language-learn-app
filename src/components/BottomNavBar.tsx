@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   Platform,
@@ -14,8 +13,10 @@ import Animated, {
   FadeOut,
   LinearTransition,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { C, F } from '../theme';
+import { F } from '../theme';
 
 export type TabKey = 'home' | 'reading' | 'vocab' | 'writing' | 'profile';
 
@@ -32,7 +33,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { key: 'home', label: 'Bosh', activeIcon: 'home', inactiveIcon: 'home' },
+  { key: 'home', label: 'Bosh', activeIcon: 'home', inactiveIcon: 'home-outline' },
   { key: 'reading', label: 'Mutolaa', activeIcon: 'book', inactiveIcon: 'book-outline' },
   { key: 'vocab', label: "Lug‘at", activeIcon: 'albums', inactiveIcon: 'albums-outline' },
   { key: 'writing', label: 'Yozish', activeIcon: 'create', inactiveIcon: 'create-outline' },
@@ -49,7 +50,7 @@ const TabButton: React.FC<{
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.9, { damping: 12, stiffness: 350 });
+    scale.value = withSpring(0.91, { damping: 12, stiffness: 350 });
   };
 
   const handlePressOut = () => {
@@ -73,10 +74,21 @@ const TabButton: React.FC<{
       ]}
       hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
     >
+      {active && (
+        <LinearGradient
+          colors={['#5372FF', '#3D5AFE', '#2B42D9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      {active && (
+        <View style={styles.liquidGlossHighlight} pointerEvents="none" />
+      )}
       <Ionicons
         name={active ? item.activeIcon : item.inactiveIcon}
-        size={20}
-        color={active ? '#FFFFFF' : C.blue}
+        size={23}
+        color={active ? '#FFFFFF' : '#2D206B'}
       />
       {active && (
         <Animated.Text
@@ -98,15 +110,32 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 }) => {
   return (
     <View style={styles.wrapper} pointerEvents="box-none">
-      <View style={styles.dock}>
-        {NAV_ITEMS.map((item) => (
-          <TabButton
-            key={item.key}
-            item={item}
-            active={currentTab === item.key}
-            onPress={() => onTabChange(item.key)}
-          />
-        ))}
+      <View style={styles.dockShadow}>
+        {/* Real blur backdrop */}
+        <BlurView
+          intensity={Platform.OS === 'ios' ? 55 : 65}
+          tint="light"
+          blurMethod="dimezisBlurView"
+          style={styles.blurContainer}
+        >
+          {/* Mostly opaque white overlay — Telegram style */}
+          <View style={styles.glassOverlay} pointerEvents="none" />
+
+          {/* Thin top highlight line */}
+          <View style={styles.specularReflex} pointerEvents="none" />
+
+          {/* Nav Items */}
+          <View style={styles.dockRow}>
+            {NAV_ITEMS.map((item) => (
+              <TabButton
+                key={item.key}
+                item={item}
+                active={currentTab === item.key}
+                onPress={() => onTabChange(item.key)}
+              />
+            ))}
+          </View>
+        </BlurView>
       </View>
     </View>
   );
@@ -117,58 +146,94 @@ export default BottomNavBar;
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
+    bottom: Platform.OS === 'ios' ? 26 : 18,
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 999,
   },
-  dock: {
+  dockShadow: {
+    borderRadius: 48,
+    shadowColor: '#160840',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.13,
+    shadowRadius: 18,
+    elevation: 14,
+  },
+  blurContainer: {
+    borderRadius: 48,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderTopColor: '#FFFFFF',
+    borderBottomColor: 'rgba(220, 210, 250, 0.5)',
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(255, 255, 255, 0.78)',
+  },
+  dockRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 36,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    gap: 4,
-    // Modern floating soft shadow
-    shadowColor: '#120E3D',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    elevation: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(235, 230, 252, 0.95)',
+    paddingVertical: 7,
+    paddingHorizontal: 9,
+    gap: 6,
+  },
+  specularReflex: {
+    position: 'absolute',
+    top: 0,
+    left: 24,
+    right: 24,
+    height: 1.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 1,
   },
   tabItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
   },
   tabItemActive: {
-    backgroundColor: C.blue,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    gap: 6,
-    shadowColor: C.blue,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    borderRadius: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    gap: 7,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
+    borderTopColor: 'rgba(255, 255, 255, 0.85)',
+    shadowColor: '#3D5AFE',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.42,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  liquidGlossHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 8,
+    right: 8,
+    height: '44%',
+    backgroundColor: 'rgba(255, 255, 255, 0.24)',
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
   },
   tabItemInactive: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activeLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: F.bodyBold,
     color: '#FFFFFF',
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
   },
 });

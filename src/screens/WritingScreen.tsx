@@ -1271,7 +1271,11 @@ const s = StyleSheet.create({
   // FAB
   fabWrap: { position: 'absolute', right: 20, bottom: 24 },
   fabRing: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderRadius: 30,
     backgroundColor: C.violet,
   },
