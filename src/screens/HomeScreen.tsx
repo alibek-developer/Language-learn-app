@@ -99,7 +99,13 @@ const todayIdx = (new Date().getDay() + 6) % 7; // Dushanba = 0
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Bosilganda springli scale + ozgina qiyshayish
-function Tap({ children, style, onPress, tilt = 0 }) {
+interface TapProps {
+  children: React.ReactNode;
+  style?: any;
+  onPress?: () => void;
+  tilt?: number;
+}
+function Tap({ children, style, onPress, tilt = 0 }: TapProps) {
   const scale = useSharedValue(1);
   const rot = useSharedValue(0);
   const a = useAnimatedStyle(() => ({
@@ -124,7 +130,16 @@ function Tap({ children, style, onPress, tilt = 0 }) {
 }
 
 // Sekin suzib yuruvchi rangli dog‘lar (fon)
-function Blob({ color, size, top, left, right, delay = 0, drift = 16 }) {
+interface BlobProps {
+  color: string;
+  size: number;
+  top?: number;
+  left?: number;
+  right?: number;
+  delay?: number;
+  drift?: number;
+}
+function Blob({ color, size, top, left, right, delay = 0, drift = 16 }: BlobProps) {
   const t = useSharedValue(0);
   useEffect(() => {
     t.value = withDelay(
@@ -186,14 +201,24 @@ function Flame() {
 }
 
 // 0 dan sanab chiqadigan raqam
-function CountUp({ to, style, duration = 1100, delay = 450 }) {
+function CountUp({
+  to,
+  style,
+  duration = 1100,
+  delay = 450,
+}: {
+  to: number;
+  style?: any;
+  duration?: number;
+  delay?: number;
+}) {
   const [v, setV] = useState(0);
   useEffect(() => {
-    let raf;
-    let start;
+    let raf: number;
+    let start: number | null = null;
     const timer = setTimeout(() => {
-      const tick = (now) => {
-        if (!start) start = now;
+      const tick = (now: number) => {
+        if (start === null) start = now;
         const p = Math.min((now - start) / duration, 1);
         setV(Math.round(to * (1 - Math.pow(1 - p, 3))));
         if (p < 1) raf = requestAnimationFrame(tick);
@@ -204,12 +229,12 @@ function CountUp({ to, style, duration = 1100, delay = 450 }) {
       clearTimeout(timer);
       cancelAnimationFrame(raf);
     };
-  }, [to]);
+  }, [to, delay, duration]);
   return <Text style={style}>{v}</Text>;
 }
 
 // Gradientli, yaltirab o‘tadigan XP bar
-function XpBar({ value, total }) {
+function XpBar({ value, total }: { value: number; total: number }) {
   const fill = useSharedValue(0);
   const sweep = useSharedValue(0);
   useEffect(() => {
@@ -251,7 +276,17 @@ function XpBar({ value, total }) {
 }
 
 // Kichik progress bar (lug‘at kartochkasi uchun)
-function MiniBar({ value, total, color, track }) {
+function MiniBar({
+  value,
+  total,
+  color,
+  track,
+}: {
+  value: number;
+  total: number;
+  color: string;
+  track: string;
+}) {
   const w = useSharedValue(0);
   useEffect(() => {
     w.value = withDelay(
@@ -365,7 +400,19 @@ function WeekRow() {
 }
 
 // ─── Bento kartochka ─────────────────────────────────────
-function Tile({ color, height, onPress, tilt, children }) {
+function Tile({
+  color,
+  height,
+  onPress,
+  tilt,
+  children,
+}: {
+  color: string;
+  height: number;
+  onPress?: () => void;
+  tilt?: number;
+  children: React.ReactNode;
+}) {
   return (
     <Tap
       onPress={onPress}
@@ -383,8 +430,12 @@ const DoneBadge = () => (
   </View>
 );
 
+export interface HomeScreenProps {
+  onNavigateTab?: (tab: 'home' | 'reading' | 'vocab' | 'writing' | 'profile') => void;
+}
+
 // ─── Asosiy ekran ────────────────────────────────────────
-export const HomeScreen = () => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateTab }) => {
   const [fontsLoaded] = useFonts({
     BricolageGrotesque_700Bold,
     BricolageGrotesque_800ExtraBold,
@@ -455,7 +506,7 @@ export const HomeScreen = () => {
         <View style={s.bento}>
           {/* Reading — baland, ko‘k */}
           <Animated.View entering={ZoomIn.delay(760).springify().damping(12)} style={{ flex: 1 }}>
-            <Tile color={C.blue} height={232} tilt={-1.5} onPress={() => { /* TODO: navigation.navigate('Reading') */ }}>
+            <Tile color={C.blue} height={232} tilt={-1.5} onPress={() => onNavigateTab?.('reading')}>
               <View style={s.decoTile} />
               <View style={s.tileIconWhite}>
                 <Ionicons name="book" size={20} color={C.blue} />
@@ -476,7 +527,7 @@ export const HomeScreen = () => {
           {/* O‘ng ustun */}
           <View style={{ flex: 1, gap: 12 }}>
             <Animated.View entering={ZoomIn.delay(860).springify().damping(12)}>
-              <Tile color={C.yellow} height={110} tilt={1.5} onPress={() => { /* TODO: navigation.navigate('Vocabulary') */ }}>
+              <Tile color={C.yellow} height={110} tilt={1.5} onPress={() => onNavigateTab?.('vocab')}>
                 <Text style={s.tileLabelDark}>Lug‘at</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5 }}>
                   <Text style={s.vocabNum}>{tasks.vocab.learned}</Text>
@@ -487,7 +538,7 @@ export const HomeScreen = () => {
             </Animated.View>
 
             <Animated.View entering={ZoomIn.delay(960).springify().damping(12)}>
-              <Tile color={C.pink} height={110} tilt={-1.5} onPress={() => { /* TODO: navigation.navigate('Writing') */ }}>
+              <Tile color={C.pink} height={110} tilt={-1.5} onPress={() => onNavigateTab?.('writing')}>
                 <View style={s.rowBetween}>
                   <Text style={s.tileLabelDark}>Yozish</Text>
                   {tasks.writing.done && <DoneBadge />}
@@ -502,7 +553,7 @@ export const HomeScreen = () => {
       </ScrollView>
     </View>
   );
-}
+};
 
 // ─── Styles ──────────────────────────────────────────────
 const s = StyleSheet.create({
@@ -557,7 +608,11 @@ const s = StyleSheet.create({
     borderRadius: 32,
   },
   wordFace: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderRadius: 32,
     padding: 22,
     justifyContent: 'space-between',
